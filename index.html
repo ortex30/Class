@@ -3,8 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>My Launchpad</title>
-  <meta name="description" content="A real, working web product built at the Agentic Building workshop." />
+  <title>Viren's Launchpad</title>
+  <meta name="description" content="Three small, working web products built at the Agentic Building workshop." />
+  <meta name="theme-color" content="#fbfaf8" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#14151a" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>" />
+  <script>
+    // Apply the saved theme before first paint so there is no flash.
+    (function () {
+      const saved = localStorage.getItem("theme");
+      if (saved === "dark" || saved === "light") {
+        document.documentElement.setAttribute("data-theme", saved);
+      }
+    })();
+  </script>
   <style>
     :root {
       --bg: #fbfaf8;
@@ -17,11 +29,21 @@
       --radius: 10px;
       --radius-sm: 4px;
     }
+    /* Dark values when the visitor has made no explicit choice. */
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #14151a; --card: #1c1e26; --ink: #f2f2f2; --muted: #a0a0a8;
         --line: #2c2f3a; --accent: #8ea9ff; --accent-soft: #232838;
       }
+    }
+    /* An explicit choice on <html> wins over the media query in both directions. */
+    html[data-theme='dark'] {
+      --bg: #14151a; --card: #1c1e26; --ink: #f2f2f2; --muted: #a0a0a8;
+      --line: #2c2f3a; --accent: #8ea9ff; --accent-soft: #232838;
+    }
+    html[data-theme='light'] {
+      --bg: #fbfaf8; --card: #ffffff; --ink: #1a1a1a; --muted: #6b6b6b;
+      --line: #e7e3dc; --accent: #2f5bea; --accent-soft: #eaf0ff;
     }
     * { box-sizing: border-box; }
     body {
@@ -48,13 +70,17 @@
     .card .emoji { font-size: 30px; display: block; margin-bottom: 10px; }
     .card h3 { margin: 0 0 6px; font-size: 17px; }
     .card p { margin: 0; font-size: 14px; color: var(--muted); }
+    .stat {
+      display: block; margin-top: 12px; padding-top: 10px;
+      border-top: 1px solid var(--line); font-size: 12px; color: var(--muted);
+    }
     .how {
       background: var(--accent-soft); border: 1px solid var(--line);
       border-radius: var(--radius); padding: 22px 24px; margin-top: 8px;
     }
     .how h2 { margin: 0 0 12px; font-size: 18px; }
-    .how ol { margin: 0; padding-left: 20px; }
-    .how li { margin: 8px 0; }
+    .how p { margin: 0; }
+    .how a { color: var(--accent); }
     code {
       background: var(--card); border: 1px solid var(--line);
       border-radius: var(--radius-sm); padding: 2px 6px; font-size: 13px;
@@ -66,6 +92,12 @@
       border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px;
       font-size: 13px; cursor: pointer; color: var(--ink);
     }
+    :where(a, button, input, textarea, select):focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 2px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -73,74 +105,128 @@
   <div class="wrap">
     <header>
       <p class="kicker">Built at the Agentic Building workshop</p>
-      <h1 id="hi">Hi, I'm building something real.</h1>
-      <p class="lede">This page is live on the internet right now. Pick a starter below,
-        then tell your AI agent to turn it into your own product.</p>
+      <h1>Three small products, live on the internet.</h1>
+      <p class="lede">This is Viren's launchpad: three small working products, each built
+        from a workshop starter and running right now. Open one below.</p>
     </header>
 
     <div class="grid">
-      <a class="card" href="seeds/tracker.html">
+      <a class="card" href="tracker.html">
         <span class="emoji">✅</span>
-        <h3>Tracker</h3>
-        <p>A list you can add to and check off. Good for habits, homework, water, workouts.</p>
+        <h3>Daily Habits</h3>
+        <p>A habit tracker with streaks and a 7-day grid so you can see your run at a glance.</p>
+        <span class="stat" id="statHabits"></span>
       </a>
-      <a class="card" href="seeds/quiz.html">
+      <a class="card" href="quiz.html">
         <span class="emoji">🧠</span>
-        <h3>Quiz</h3>
-        <p>Answer questions, get a result. Good for a decision helper, a study quiz, a recommender.</p>
+        <h3>Web Basics Quiz</h3>
+        <p>Eight questions with instant feedback and a best score that saves between visits.</p>
+        <span class="stat" id="statQuiz"></span>
       </a>
-      <a class="card" href="seeds/gallery.html">
+      <a class="card" href="gallery.html">
         <span class="emoji">🖼️</span>
-        <h3>Gallery / Board</h3>
-        <p>A wall of cards you can add to. Good for photos, picks, a team, an event, recommendations.</p>
+        <h3>The Board</h3>
+        <p>A club event board with categories and likes for the things people care about most.</p>
+        <span class="stat" id="statBoard"></span>
       </a>
     </div>
 
     <div class="how">
-      <h2>Make one of these yours</h2>
-      <ol>
-        <li>Open the <strong>Chat</strong> panel in VS Code and switch it to <strong>Agent</strong> mode.</li>
-        <li>Type one sentence, for example:
-          <br /><code>Start from the tracker seed and make it a tracker for our club fundraiser that shows how close we are to our goal. Keep it to one file for now.</code></li>
-        <li>Read what the agent changed, run it in the preview, and keep steering until it works.</li>
-        <li>Push your changes. This page updates itself in about a minute.</li>
-      </ol>
+      <h2>How this was made</h2>
+      <p>Each product grew out of a starter in the workshop's <code>seeds/</code> folder.
+        Daily Habits started from the <a href="seeds/tracker.html">tracker seed</a>,
+        Web Basics Quiz from the <a href="seeds/quiz.html">quiz seed</a>, and
+        The Board from the <a href="seeds/gallery.html">gallery seed</a>. Open a seed to
+        see the plain starting point each product was built from.</p>
     </div>
 
     <footer>
-      <p>Change this text to your own name. This is your site now, and it is yours to keep.</p>
+      <p>Built by Viren at the Agentic Building workshop.</p>
     </footer>
   </div>
 
   <script>
-    // Small interactive touch: remember the visitor's theme choice.
+    // Toggle the theme: flip the data-theme attribute and remember the choice.
     const btn = document.getElementById("themeBtn");
-    const saved = localStorage.getItem("theme");
-    if (saved) document.documentElement.style.colorScheme = saved;
-    function currentIsDark() {
-      const cs = document.documentElement.style.colorScheme;
-      if (cs) return cs === "dark";
-      return window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+    function currentTheme() {
+      const attr = document.documentElement.getAttribute("data-theme");
+      if (attr) return attr;
+      // No explicit choice yet, so fall back to the system preference.
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
+
+    // The button advertises what it switches TO, based on the effective theme.
+    function updateThemeLabel() {
+      if (currentTheme() === "dark") {
+        btn.textContent = "☀️ Light";
+        btn.setAttribute("aria-label", "Switch to light mode");
+      } else {
+        btn.textContent = "🌙 Dark";
+        btn.setAttribute("aria-label", "Switch to dark mode");
+      }
+    }
+
     btn.addEventListener("click", () => {
-      const next = currentIsDark() ? "light" : "dark";
-      document.documentElement.style.colorScheme = next;
-      // Also flip our CSS variables by toggling a data attribute the browser respects.
+      const next = currentTheme() === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
       localStorage.setItem("theme", next);
-      applyTheme(next);
+      updateThemeLabel();
     });
-    function applyTheme(mode) {
-      const dark = mode === "dark";
-      const r = document.documentElement.style;
-      r.setProperty("--bg", dark ? "#14151a" : "#fbfaf8");
-      r.setProperty("--card", dark ? "#1c1e26" : "#ffffff");
-      r.setProperty("--ink", dark ? "#f2f2f2" : "#1a1a1a");
-      r.setProperty("--muted", dark ? "#a0a0a8" : "#6b6b6b");
-      r.setProperty("--line", dark ? "#2c2f3a" : "#e7e3dc");
-      r.setProperty("--accent", dark ? "#8ea9ff" : "#2f5bea");
-      r.setProperty("--accent-soft", dark ? "#232838" : "#eaf0ff");
+
+    updateThemeLabel();
+
+    // Live stat lines: read each product's own localStorage, tolerating bad data.
+    function renderStats() {
+      // Daily Habits — habits-v1 is an array of habits, each with a days map.
+      try {
+        const habits = JSON.parse(localStorage.getItem("habits-v1") || "[]");
+        const el = document.getElementById("statHabits");
+        if (!Array.isArray(habits) || habits.length === 0) {
+          el.textContent = "No habits yet — start one";
+        } else {
+          // Today's key from LOCAL date parts, matching the tracker.
+          const d = new Date();
+          const key = d.getFullYear() + "-" +
+            String(d.getMonth() + 1).padStart(2, "0") + "-" +
+            String(d.getDate()).padStart(2, "0");
+          const done = habits.filter((h) => h && h.days && h.days[key]).length;
+          const n = habits.length;
+          el.textContent = n + " habit" + (n === 1 ? "" : "s") + " · " + done + " done today";
+        }
+      } catch (e) { /* leave the stat blank on bad data */ }
+
+      // Web Basics Quiz — quiz-best-v1 is a stored integer best score.
+      try {
+        const raw = localStorage.getItem("quiz-best-v1");
+        const best = parseInt(raw, 10);
+        const el = document.getElementById("statQuiz");
+        if (raw === null || isNaN(best)) {
+          el.textContent = "Not played yet — take the quiz";
+        } else {
+          el.textContent = "Best score: " + best + "/8";
+        }
+      } catch (e) { /* leave the stat blank on bad data */ }
+
+      // The Board — board-v1 is an array of cards, each with a likes count.
+      try {
+        const cards = JSON.parse(localStorage.getItem("board-v1") || "null");
+        const el = document.getElementById("statBoard");
+        if (!Array.isArray(cards) || cards.length === 0) {
+          el.textContent = "Nothing posted yet";
+        } else {
+          let likes = 0;
+          for (let i = 0; i < cards.length; i++) {
+            likes += Number(cards[i] && cards[i].likes) || 0;
+          }
+          const n = cards.length;
+          el.textContent = n + " post" + (n === 1 ? "" : "s") + " · " +
+            likes + " like" + (likes === 1 ? "" : "s");
+        }
+      } catch (e) { /* leave the stat blank on bad data */ }
     }
-    if (saved) applyTheme(saved);
+
+    renderStats();
   </script>
 </body>
 </html>

@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Board</title>
+  <meta name="description" content="A shared wall where our club posts events, announcements, and recommendations." />
+  <meta name="theme-color" content="#fbfaf8" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#14151a" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖼️</text></svg>" />
+  <script>
+    // Apply the saved theme before the first paint so there is no flash of the wrong colors.
+    // Uses the same "theme" key as the home page, so the choice carries across pages.
+    (function () {
+      var saved = localStorage.getItem("theme");
+      if (saved === "dark" || saved === "light") {
+        document.documentElement.setAttribute("data-theme", saved);
+      }
+    })();
+  </script>
+  <style>
+    :root {
+      --bg:#fbfaf8; --card:#ffffff; --ink:#1a1a1a; --muted:#6b6b6b; --line:#e7e3dc;
+      --accent:#2f5bea; --accent-soft:#eaf0ff; --radius:10px; --radius-sm:4px;
+    }
+    /* Dark mode for visitors who have not picked a theme yet. */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:#14151a; --card:#1c1e26; --ink:#f2f2f2; --muted:#a0a0a8;
+        --line:#2c2f3a; --accent:#8ea9ff; --accent-soft:#232838;
+      }
+    }
+    /* An explicit choice wins over the media query in both directions. */
+    html[data-theme='dark'] {
+      --bg:#14151a; --card:#1c1e26; --ink:#f2f2f2; --muted:#a0a0a8;
+      --line:#2c2f3a; --accent:#8ea9ff; --accent-soft:#232838;
+    }
+    html[data-theme='light'] {
+      --bg:#fbfaf8; --card:#ffffff; --ink:#1a1a1a; --muted:#6b6b6b; --line:#e7e3dc;
+      --accent:#2f5bea; --accent-soft:#eaf0ff;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height:1.5; }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 48px 20px 72px; }
+    .home { display: inline-block; color: var(--muted); text-decoration: none; font-size: 14px; margin-bottom: 16px; }
+    .home:hover { color: var(--accent); }
+    h1 { font-size: clamp(26px,5vw,36px); margin: 0 0 4px; }
+    .sub { color: var(--muted); margin: 0 0 24px; }
+
+    /* Add-card form */
+    form {
+      display: grid; gap: 10px; background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 18px; margin-bottom: 28px;
+    }
+    @media (min-width: 560px) { form { grid-template-columns: 1fr 1fr; } form .full { grid-column: 1 / -1; } }
+    input, textarea, select {
+      width: 100%; padding: 11px 13px; font-size: 15px; color: var(--ink); font-family: inherit;
+      background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm);
+    }
+    input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 52px; }
+    button {
+      font-size: 15px; font-weight: 600; cursor: pointer; border-radius: var(--radius-sm);
+      border: 1px solid var(--accent); background: var(--accent); color: #fff; padding: 12px 16px;
+    }
+    button:hover { filter: brightness(1.05); }
+
+    /* Filter chips + sort control share one row */
+    .toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; margin-bottom: 20px; }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 999px;
+      border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    }
+    .chip .count { color: var(--muted); font-weight: 500; margin-left: 4px; }
+    .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .chip.active .count { color: #fff; }
+
+    /* Board grid + cards */
+    .board { display: grid; gap: 16px; grid-template-columns: 1fr; }
+    @media (min-width: 560px) { .board { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 780px) { .board { grid-template-columns: 1fr 1fr 1fr; } }
+    .item {
+      position: relative; background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .thumb { height: 120px; display: grid; place-items: center; font-size: 46px; background: var(--accent-soft); }
+    .body { padding: 14px; }
+    .cat {
+      display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.04em; color: var(--accent); background: var(--accent-soft);
+      border-radius: var(--radius-sm); padding: 3px 8px; margin-bottom: 8px;
+    }
+    .body h3 { margin: 0 0 6px; font-size: 16px; }
+    .body p { margin: 0; font-size: 14px; color: var(--muted); }
+    .actions { margin-top: 12px; }
+    .like {
+      font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: var(--radius-sm);
+      background: var(--accent-soft); color: var(--accent); border: 1px solid var(--line);
+    }
+    .del {
+      position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.45); color: #fff;
+      border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; font-size: 15px; padding: 0;
+    }
+    .empty { color: var(--muted); text-align: center; padding: 28px 0; grid-column: 1 / -1; }
+
+    /* Theme toggle, matching the home page */
+    .toggle {
+      position: fixed; top: 16px; right: 16px; background: var(--card);
+      border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px;
+      font-size: 13px; cursor: pointer; color: var(--ink); font-weight: 400;
+    }
+    .toggle:hover { filter: none; }
+
+    /* Sort control (Newest / Top) — kept distinct from .chip filter buttons. */
+    .sort { display: flex; align-items: center; gap: 6px; }
+    .sort-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-right: 2px; }
+    .sort-btn {
+      font-size: 13px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer;
+      border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    }
+    .sort-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* Small muted relative timestamp on cards that have one. */
+    .time { display: block; margin-top: 10px; font-size: 11px; color: var(--muted); }
+
+    /* Accessibility: always show keyboard focus, and honor reduced-motion. */
+    :where(a, button, input, textarea, select):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <button class="toggle" id="themeBtn" aria-label="Toggle dark mode">🌙 Theme</button>
+  <div class="wrap">
+    <a class="home" href="index.html">← Home</a>
+    <h1>The Board</h1>
+    <p class="sub">A shared wall for our club — post events, announcements, and recommendations. Everything saves automatically.</p>
+
+    <form id="adder">
+      <input type="text" id="emoji" placeholder="Emoji (e.g. 🎉)" maxlength="4" />
+      <input type="text" id="title" placeholder="Title" required />
+      <select id="category" class="full" aria-label="Category">
+        <option value="Event">Event</option>
+        <option value="Announcement">Announcement</option>
+        <option value="Recommendation">Recommendation</option>
+      </select>
+      <textarea class="full" id="note" placeholder="A short note..."></textarea>
+      <button class="full" type="submit">Post to the board</button>
+    </form>
+
+    <div class="toolbar">
+      <div class="filters" id="filters"></div>
+      <div class="sort" id="sort"></div>
+    </div>
+    <div class="board" id="board"></div>
+  </div>
+
+  <script>
+    const KEY = "board-v1";
+    const CATEGORIES = ["Event", "Announcement", "Recommendation"];
+
+    // Load saved cards. A missing key (null) means this is the very first visit,
+    // so we seed the board with one sample card per category.
+    let cards = JSON.parse(localStorage.getItem(KEY) || "null");
+    let idCounter = 0;
+    function makeId() {
+      idCounter++;
+      return "c" + Date.now() + "-" + idCounter;
+    }
+
+    if (cards === null) {
+      cards = [
+        { id: makeId(), emoji: "🎉", title: "Fall Welcome Mixer",
+          note: "Friday 6pm in the courtyard. Snacks, music, and games — bring a friend!",
+          category: "Event", likes: 3 },
+        { id: makeId(), emoji: "📣", title: "Dues are due this week",
+          note: "Pay your semester dues by Friday to stay on the active roster.",
+          category: "Announcement", likes: 1 },
+        { id: makeId(), emoji: "📚", title: "Read: “Make Time”",
+          note: "A short, practical book the officers loved. Great for a busy schedule.",
+          category: "Recommendation", likes: 2 },
+      ];
+    }
+
+    // Which filter chip is active. "All" shows every card.
+    let currentFilter = "All";
+    // How the visible cards are ordered: "newest" (array order) or "top" (most likes).
+    let currentSort = "newest";
+
+    const boardEl = document.getElementById("board");
+    const filtersEl = document.getElementById("filters");
+    const sortEl = document.getElementById("sort");
+    const form = document.getElementById("adder");
+    const emojiEl = document.getElementById("emoji");
+    const titleEl = document.getElementById("title");
+    const noteEl = document.getElementById("note");
+    const categoryEl = document.getElementById("category");
+
+    function save() { localStorage.setItem(KEY, JSON.stringify(cards)); }
+
+    // A short, human relative time. Cards without a numeric createdAt (older data
+    // and the seeded samples) return "" so no label is shown — never NaN/Invalid Date.
+    function relTime(ts) {
+      if (typeof ts !== "number" || !isFinite(ts)) return "";
+      const diff = Date.now() - ts;
+      const min = 60000, hour = 3600000, day = 86400000;
+      if (diff < min) return "just now";
+      if (diff < hour) return Math.floor(diff / min) + "m ago";
+      if (diff < day) return Math.floor(diff / hour) + "h ago";
+      if (diff < 7 * day) return Math.floor(diff / day) + "d ago";
+      const d = new Date(ts);
+      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      return months[d.getMonth()] + " " + d.getDate();
+    }
+
+    // How many cards match a filter name ("All" counts everything).
+    function countFor(name) {
+      if (name === "All") return cards.length;
+      return cards.filter((c) => c.category === name).length;
+    }
+
+    function renderFilters() {
+      filtersEl.innerHTML = "";
+      ["All"].concat(CATEGORIES).forEach((name) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "chip" + (name === currentFilter ? " active" : "");
+
+        const count = document.createElement("span");
+        count.className = "count";
+        count.textContent = countFor(name);
+        chip.append(document.createTextNode(name + " "), count);
+
+        chip.addEventListener("click", () => { currentFilter = name; render(); });
+        filtersEl.appendChild(chip);
+      });
+    }
+
+    function renderSort() {
+      sortEl.innerHTML = "";
+      const label = document.createElement("span");
+      label.className = "sort-label";
+      label.textContent = "Sort";
+      sortEl.appendChild(label);
+      [{ key: "newest", text: "Newest" }, { key: "top", text: "Top" }].forEach((o) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "sort-btn" + (o.key === currentSort ? " active" : "");
+        b.textContent = o.text;
+        b.setAttribute("aria-pressed", o.key === currentSort ? "true" : "false");
+        b.addEventListener("click", () => { currentSort = o.key; render(); });
+        sortEl.appendChild(b);
+      });
+    }
+
+    function renderCards() {
+      boardEl.innerHTML = "";
+      // Apply the active filter first, then sort a COPY so the saved order is never mutated.
+      let visible = currentFilter === "All"
+        ? cards.slice()
+        : cards.filter((c) => c.category === currentFilter);
+      if (currentSort === "top") {
+        visible.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+      }
+
+      if (visible.length === 0) {
+        boardEl.innerHTML = '<p class="empty">No cards in this filter yet. Add one above, or pick a different filter.</p>';
+        return;
+      }
+
+      // cards is kept newest-first (new posts are added to the front), so we render in order.
+      visible.forEach((card) => {
+        const item = document.createElement("div");
+        item.className = "item";
+
+        const thumb = document.createElement("div");
+        thumb.className = "thumb";
+        thumb.textContent = card.emoji || "🖼️";
+
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "del";
+        del.textContent = "×";
+        del.setAttribute("aria-label", "Delete card");
+        del.addEventListener("click", () => deleteCard(card.id));
+
+        const body = document.createElement("div");
+        body.className = "body";
+
+        const cat = document.createElement("span");
+        cat.className = "cat";
+        cat.textContent = card.category;
+
+        const h = document.createElement("h3");
+        h.textContent = card.title;
+
+        const p = document.createElement("p");
+        p.textContent = card.note;
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        const like = document.createElement("button");
+        like.type = "button";
+        like.className = "like";
+        like.textContent = "♥ " + card.likes;
+        like.setAttribute("aria-label", "Like card");
+        like.addEventListener("click", () => likeCard(card.id));
+        actions.appendChild(like);
+
+        body.append(cat, h, p, actions);
+
+        const when = relTime(card.createdAt);
+        if (when) {
+          const time = document.createElement("span");
+          time.className = "time";
+          time.textContent = when;
+          body.appendChild(time);
+        }
+
+        item.append(thumb, del, body);
+        boardEl.appendChild(item);
+      });
+    }
+
+    function render() {
+      renderFilters();
+      renderSort();
+      renderCards();
+    }
+
+    function likeCard(id) {
+      const card = cards.find((c) => c.id === id);
+      if (!card) return;
+      card.likes++;
+      save();
+      render();
+    }
+
+    function deleteCard(id) {
+      cards = cards.filter((c) => c.id !== id);
+      save();
+      render();
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const title = titleEl.value.trim();
+      if (!title) return;
+      cards.unshift({
+        id: makeId(),
+        emoji: emojiEl.value.trim() || "🖼️",
+        title,
+        note: noteEl.value.trim(),
+        category: categoryEl.value,
+        likes: 0,
+        createdAt: Date.now(),
+      });
+      emojiEl.value = ""; titleEl.value = ""; noteEl.value = "";
+      categoryEl.selectedIndex = 0;
+      save();
+      render();
+    });
+
+    // Theme toggle: flip data-theme on <html> and remember the choice.
+    const themeBtn = document.getElementById("themeBtn");
+    function currentIsDark() {
+      const attr = document.documentElement.getAttribute("data-theme");
+      if (attr) return attr === "dark";
+      return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+    // Label shows what a click will switch TO, based on the effective theme.
+    function updateThemeLabel() {
+      const dark = currentIsDark();
+      themeBtn.textContent = dark ? "☀️ Light" : "🌙 Dark";
+      themeBtn.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+    }
+    themeBtn.addEventListener("click", () => {
+      const next = currentIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+      updateThemeLabel();
+    });
+
+    // Save the seed on first load so it persists, then draw the page.
+    updateThemeLabel();
+    save();
+    render();
+  </script>
+</body>
+</html>
