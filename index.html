@@ -98,6 +98,97 @@
     @media (prefers-reduced-motion: reduce) {
       * { transition: none !important; animation: none !important; }
     }
+
+    /* ---- Homepage calendar ---- */
+    .cal {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 18px; margin: 36px 0 8px;
+    }
+    .cal-head {
+      display: flex; flex-wrap: wrap; gap: 14px;
+      align-items: center; justify-content: space-between; margin-bottom: 14px;
+    }
+    .cal-title { display: flex; align-items: center; gap: 12px; }
+    .cal-today-badge {
+      display: flex; flex-direction: column; align-items: center; width: 52px;
+      border: 1px solid var(--line); border-radius: var(--radius-sm);
+      overflow: hidden; background: var(--accent-soft); flex: none;
+    }
+    .cal-today-badge .m { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 2px 0; }
+    .cal-today-badge .d { font-size: 18px; font-weight: 700; width: 100%; text-align: center; background: var(--card); padding: 2px 0; }
+    .cal-month { margin: 0; font-size: 18px; }
+    .cal-range { margin: 0; font-size: 13px; color: var(--muted); }
+    .cal-nav { display: inline-flex; }
+    .cal-nav button {
+      font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+      background: var(--card); color: var(--ink); border: 1px solid var(--line);
+      padding: 8px 12px; margin-left: -1px;
+    }
+    .cal-nav button:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+    .cal-nav button:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+    .cal-nav button:hover { border-color: var(--accent); color: var(--accent); position: relative; z-index: 1; }
+
+    .cal-add { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; margin-bottom: 14px; }
+    .cal-add input {
+      font: inherit; font-size: 14px; color: var(--ink); background: var(--bg);
+      border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 9px 11px; min-width: 0;
+    }
+    .cal-time { width: 120px; }
+    .cal-add button {
+      font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+      background: var(--accent); color: #fff; border: 1px solid var(--accent);
+      border-radius: var(--radius-sm); padding: 9px 14px;
+    }
+    .cal-add button:hover { filter: brightness(1.05); }
+    @media (max-width: 560px) {
+      .cal-add { grid-template-columns: 1fr 1fr; }
+      .cal-add .cal-name, .cal-add button { grid-column: 1 / -1; }
+      .cal-time { width: auto; }
+    }
+
+    .cal-dow {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      text-align: center; font-size: 11px; font-weight: 600; color: var(--muted);
+      border: 1px solid var(--line); border-bottom: none;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0; overflow: hidden;
+    }
+    .cal-dow span { padding: 6px 0; }
+    .cal-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      border-left: 1px solid var(--line); border-top: 1px solid var(--line);
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm); overflow: hidden;
+    }
+    .cal-cell {
+      min-height: 84px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+      padding: 4px; display: flex; flex-direction: column; gap: 3px;
+    }
+    .cal-out { background: var(--accent-soft); }
+    .cal-num {
+      align-self: flex-end; font: inherit; font-size: 12px; font-weight: 600; line-height: 1;
+      width: 24px; height: 24px; border-radius: 999px; border: none; cursor: pointer;
+      background: transparent; color: var(--ink); display: grid; place-items: center;
+    }
+    .cal-out .cal-num { color: var(--muted); }
+    .cal-num:hover { background: var(--accent-soft); }
+    .cal-today .cal-num { background: var(--accent); color: #fff; }
+    .cal-events { display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
+    .cal-pill {
+      font-size: 11px; line-height: 1.3; padding: 2px 6px; border-radius: var(--radius-sm);
+      background: var(--accent-soft); color: var(--accent); font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .cal-pill.board { background: var(--card); color: var(--muted); border: 1px solid var(--line); font-weight: 500; }
+    .cal-more { font-size: 10px; color: var(--muted); padding-left: 2px; }
+    .cal-dots { display: none; gap: 3px; flex-wrap: wrap; }
+    .cal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+    .cal-dot.board { background: var(--muted); }
+    .cal-hint { font-size: 12px; color: var(--muted); margin: 10px 2px 0; }
+    .cal-hint a { color: var(--accent); }
+    @media (max-width: 560px) {
+      .cal-cell { min-height: 54px; }
+      .cal-events { display: none; }
+      .cal-dots { display: flex; }
+    }
   </style>
 </head>
 <body>
@@ -130,6 +221,39 @@
         <span class="stat" id="statBoard"></span>
       </a>
     </div>
+
+    <section class="cal" aria-label="Calendar">
+      <div class="cal-head">
+        <div class="cal-title">
+          <div class="cal-today-badge" aria-hidden="true">
+            <span class="m" id="calTodayMon"></span>
+            <span class="d" id="calTodayDay"></span>
+          </div>
+          <div>
+            <h2 class="cal-month" id="calMonth"></h2>
+            <p class="cal-range" id="calRange"></p>
+          </div>
+        </div>
+        <div class="cal-nav">
+          <button type="button" id="calPrev" aria-label="Previous month">‹</button>
+          <button type="button" id="calToday">Today</button>
+          <button type="button" id="calNext" aria-label="Next month">›</button>
+        </div>
+      </div>
+
+      <form class="cal-add" id="calAdd">
+        <input type="date" id="calDate" aria-label="Event date" />
+        <input type="text" class="cal-name" id="calName" placeholder="Add an event…" aria-label="Event name" autocomplete="off" />
+        <input type="text" class="cal-time" id="calTime" placeholder="Time (optional)" aria-label="Event time" autocomplete="off" />
+        <button type="submit">Add event</button>
+      </form>
+
+      <div class="cal-dow" aria-hidden="true">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <p class="cal-hint">Events you add here and posts from <a href="gallery.html">The Board</a> show up automatically.</p>
+    </section>
 
     <div class="how">
       <h2>How this was made</h2>
@@ -227,6 +351,175 @@
     }
 
     renderStats();
+
+    // ---- Homepage calendar: your own events + Board posts, saved and live. ----
+    (function () {
+      const CAL_KEY = "calendar-v1";
+      const MONTHS = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+      const MON_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+      const gridEl = document.getElementById("calGrid");
+      const monthEl = document.getElementById("calMonth");
+      const rangeEl = document.getElementById("calRange");
+      const todayMonEl = document.getElementById("calTodayMon");
+      const todayDayEl = document.getElementById("calTodayDay");
+      const form = document.getElementById("calAdd");
+      const dateInput = document.getElementById("calDate");
+      const nameInput = document.getElementById("calName");
+      const timeInput = document.getElementById("calTime");
+
+      const now = new Date();
+      let viewYear = now.getFullYear();
+      let viewMonth = now.getMonth(); // 0-based
+
+      // "YYYY-MM-DD" from a Date's LOCAL parts (never UTC, so days don't shift).
+      function keyOf(d) {
+        return d.getFullYear() + "-" +
+          String(d.getMonth() + 1).padStart(2, "0") + "-" +
+          String(d.getDate()).padStart(2, "0");
+      }
+      const todayKey = keyOf(now);
+
+      function loadEvents() {
+        try {
+          const raw = JSON.parse(localStorage.getItem(CAL_KEY) || "[]");
+          return Array.isArray(raw) ? raw : [];
+        } catch (e) { return []; }
+      }
+      function saveEvents(list) { localStorage.setItem(CAL_KEY, JSON.stringify(list)); }
+
+      // Group every event by its day key: { "YYYY-MM-DD": [ {name, time, source} ] }.
+      function eventsByDay() {
+        const map = {};
+        function add(key, ev) { (map[key] = map[key] || []).push(ev); }
+
+        // Your own calendar events.
+        loadEvents().forEach((ev) => {
+          if (ev && typeof ev.date === "string" && ev.name) {
+            add(ev.date, { name: String(ev.name), time: ev.time ? String(ev.time) : "", source: "you" });
+          }
+        });
+
+        // Board posts (board-v1), placed on the day each was posted. Cards with
+        // no createdAt (older posts and the samples) simply don't appear here.
+        try {
+          const cards = JSON.parse(localStorage.getItem("board-v1") || "[]");
+          if (Array.isArray(cards)) {
+            cards.forEach((c) => {
+              if (c && typeof c.createdAt === "number" && isFinite(c.createdAt)) {
+                add(keyOf(new Date(c.createdAt)), { name: String(c.title || "Post"), time: "Board post", source: "board" });
+              }
+            });
+          }
+        } catch (e) { /* ignore bad board data */ }
+
+        return map;
+      }
+
+      function render() {
+        const map = eventsByDay();
+
+        monthEl.textContent = MONTHS[viewMonth] + " " + viewYear;
+        const last = new Date(viewYear, viewMonth + 1, 0);
+        rangeEl.textContent = MON_ABBR[viewMonth] + " 1 – " + MON_ABBR[last.getMonth()] + " " + last.getDate() + ", " + viewYear;
+        todayMonEl.textContent = MON_ABBR[now.getMonth()];
+        todayDayEl.textContent = String(now.getDate());
+
+        // Six weeks starting on the Sunday on/before the 1st (always fits any month).
+        const first = new Date(viewYear, viewMonth, 1);
+        const start = new Date(viewYear, viewMonth, 1 - first.getDay());
+        gridEl.innerHTML = "";
+        for (let i = 0; i < 42; i++) {
+          const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+          const key = keyOf(d);
+          const inMonth = d.getMonth() === viewMonth;
+
+          const cell = document.createElement("div");
+          cell.className = "cal-cell" + (inMonth ? "" : " cal-out") + (key === todayKey ? " cal-today" : "");
+
+          // The day number is a button: tap it to pre-fill the add form for that day.
+          const num = document.createElement("button");
+          num.type = "button";
+          num.className = "cal-num";
+          num.textContent = String(d.getDate());
+          num.setAttribute("aria-label", "Add an event on " + MON_ABBR[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear());
+          num.addEventListener("click", () => { dateInput.value = key; nameInput.focus(); });
+          cell.appendChild(num);
+
+          const evs = map[key] || [];
+          if (evs.length) {
+            const listEl = document.createElement("div");
+            listEl.className = "cal-events";
+            evs.slice(0, 2).forEach((ev) => {
+              const pill = document.createElement("span");
+              pill.className = "cal-pill" + (ev.source === "board" ? " board" : "");
+              pill.textContent = ev.name;
+              pill.title = ev.name + (ev.time ? " · " + ev.time : "");
+              listEl.appendChild(pill);
+            });
+            if (evs.length > 2) {
+              const more = document.createElement("span");
+              more.className = "cal-more";
+              more.textContent = "+" + (evs.length - 2) + " more";
+              listEl.appendChild(more);
+            }
+            cell.appendChild(listEl);
+
+            // Compact dots stand in for pills on small screens.
+            const dots = document.createElement("div");
+            dots.className = "cal-dots";
+            evs.slice(0, 4).forEach((ev) => {
+              const dot = document.createElement("span");
+              dot.className = "cal-dot" + (ev.source === "board" ? " board" : "");
+              dots.appendChild(dot);
+            });
+            cell.appendChild(dots);
+          }
+
+          gridEl.appendChild(cell);
+        }
+      }
+
+      // Add an event, then jump the view to the month it lands in.
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const date = dateInput.value; // "YYYY-MM-DD" straight from the date picker
+        const name = nameInput.value.trim();
+        if (!date || !name) return;
+        const list = loadEvents();
+        list.push({ id: Date.now(), date: date, name: name, time: timeInput.value.trim() });
+        saveEvents(list);
+        const parts = date.split("-");
+        viewYear = Number(parts[0]);
+        viewMonth = Number(parts[1]) - 1;
+        nameInput.value = "";
+        timeInput.value = "";
+        render();
+        nameInput.focus();
+      });
+
+      document.getElementById("calPrev").addEventListener("click", () => {
+        const d = new Date(viewYear, viewMonth - 1, 1);
+        viewYear = d.getFullYear(); viewMonth = d.getMonth(); render();
+      });
+      document.getElementById("calNext").addEventListener("click", () => {
+        const d = new Date(viewYear, viewMonth + 1, 1);
+        viewYear = d.getFullYear(); viewMonth = d.getMonth(); render();
+      });
+      document.getElementById("calToday").addEventListener("click", () => {
+        viewYear = now.getFullYear(); viewMonth = now.getMonth(); render();
+      });
+
+      // Default the picker to today; refresh when you return after posting on
+      // The Board, or when another tab changes the saved data.
+      dateInput.value = todayKey;
+      window.addEventListener("focus", render);
+      window.addEventListener("storage", render);
+
+      render();
+    })();
   </script>
 </body>
 </html>
